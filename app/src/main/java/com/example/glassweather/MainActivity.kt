@@ -96,11 +96,11 @@ private fun DynamicAppTheme(
     val colorScheme = if (useDark) {
         darkColorScheme(
             primary = accentColor.primaryDark,
-            onPrimary = Color(0xFF090D16),
-            background = Color(0xFF0F172A),
-            onBackground = Color(0xFFF8FAFC),
-            surface = Color(0xFF1E293B),
-            onSurface = Color(0xFFF8FAFC)
+            onPrimary = Color.Black,
+            background = Color.Black,
+            onBackground = Color.White,
+            surface = Color(0xFF0A0A0A),
+            onSurface = Color.White
         )
     } else {
         lightColorScheme(
@@ -148,7 +148,6 @@ fun WeatherConfigScreen(
             ) {
                 Text("Glass Weather & Lunar", style = MaterialTheme.typography.headlineSmall)
 
-                // Nền ứng dụng: Hệ thống / Sáng / Tối
                 Text("Nền ứng dụng", style = MaterialTheme.typography.titleMedium)
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -163,7 +162,6 @@ fun WeatherConfigScreen(
                     }
                 }
 
-                // Màu chủ đề ứng dụng
                 Text("Màu chủ đề", style = MaterialTheme.typography.titleMedium)
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -198,7 +196,6 @@ fun WeatherConfigScreen(
                     }
                 }
 
-                // Vị trí & GPS
                 val fetchGpsAndRefresh: () -> Unit = {
                     scope.launch {
                         statusText = "Đang xác định vị trí GPS..."
@@ -282,7 +279,6 @@ fun WeatherConfigScreen(
                     )
                 }
 
-                // Kiểu hiển thị widget
                 Text("Kiểu hiển thị widget", style = MaterialTheme.typography.titleMedium)
                 WidgetStyle.entries.forEach { style ->
                     Row(
