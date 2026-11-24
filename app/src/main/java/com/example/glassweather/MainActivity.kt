@@ -5,6 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,12 +17,24 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -33,6 +47,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -92,6 +107,9 @@ fun GlassWeatherApp() {
             val ok = WeatherRepository.refreshWeather(context)
             updateAllWeatherWidgets(context)
             state = WeatherPrefs.loadState(context)
+            latInput = state.latitude.toString()
+            lonInput = state.longitude.toString()
+            cityInput = state.locationName
             isRefreshing = false
             statusMessage = customMessage ?: if (ok) {
                 "Đã cập nhật thời tiết & widget (${state.updatedAt})"
@@ -104,6 +122,7 @@ fun GlassWeatherApp() {
     fun applyStateChange(transform: (WeatherState) -> WeatherState) {
         val next = transform(state)
         state = next
+        WeatherPrefs.saveState(context, next)
         scope.launch {
             updateAllWeatherWidgets(context)
         }
@@ -166,7 +185,7 @@ fun GlassWeatherApp() {
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Column {
+                                    Column(modifier = Modifier.weight(1f)) {
                                         Text(
                                             text = "$weekday • $solarDate",
                                             color = Color.White,
@@ -181,6 +200,8 @@ fun GlassWeatherApp() {
                                             fontWeight = FontWeight.SemiBold
                                         )
                                     }
+
+                                    Spacer(modifier = Modifier.width(12.dp))
 
                                     Column(horizontalAlignment = Alignment.End) {
                                         Text(
@@ -197,6 +218,152 @@ fun GlassWeatherApp() {
                                         )
                                     }
                                 }
+
+                                Spacer(modifier = Modifier.height(14.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Button(
+                                        onClick = { refreshAndUpdateWidgets() },
+                                        enabled = !isRefreshing,
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = state.accentColor.primaryDark,
+                                            contentColor = Color(0xFF070B14)
+                                        ),
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        if (isRefreshing) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(18.dp),
+                                                strokeWidth = 2.dp
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text("Đang tải...")
+                                        } else {
+                                            Text("Làm mới ngay", fontWeight = FontWeight.SemiBold)
+                                        }
+                                    }
+
+                                    OutlinedButton(
+                                        onClick = {
+                                            scope.launch {
+                                                updateAllWeatherWidgets(context)
+                                                statusMessage = "Đã đồng bộ lại widget"
+                                            }
+                                        }
+                                    ) {
+                                        Text("Đẩy widget", color = Color.White)
+                                    }
+                                }
+
+                                if (statusMessage != null) {
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Text(
+                                        text = statusMessage ?: "",
+                                        color = Color(0xFFE2E8F0),
+                                        fontSize = 12.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF11192E)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Text(
+                                text = "Chọn nhanh địa điểm",
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                items(PRESET_CITIES) { city ->
+                                    val selected = state.locationName == city.name
+                                    FilterChip(
+                                        selected = selected,
+                                        onClick = {
+                                            cityInput = city.name
+                                            latInput = city.lat.toString()
+                                            lonInput = city.lon.toString()
+                                            applyStateChange {
+                                                it.copy(
+                                                    locationName = city.name,
+                                                    latitude = city.lat,
+                                                    longitude = city.lon
+                                                )
+                                            }
+                                            refreshAndUpdateWidgets("Đã chuyển sang ${city.name}")
+                                        },
+                                        label = { Text(city.name) },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = state.accentColor.primaryDark,
+                                            selectedLabelColor = Color(0xFF070B14),
+                                            containerColor = Color(0xFF1A2540),
+                                            labelColor = Color(0xFFE2E8F0)
+                                        )
+                                    )
+                                }
+                            }
+
+                            OutlinedTextField(
+                                value = cityInput,
+                                onValueChange = { cityInput = it },
+                                label = { Text("Tên địa điểm") },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                OutlinedTextField(
+                                    value = latInput,
+                                    onValueChange = { latInput = it },
+                                    label = { Text("Vĩ độ (Lat)") },
+                                    singleLine = true,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                OutlinedTextField(
+                                    value = lonInput,
+                                    onValueChange = { lonInput = it },
+                                    label = { Text("Kinh độ (Lon)") },
+                                    singleLine = true,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+
+                            Button(
+                                onClick = {
+                                    val lat = latInput.trim().toDoubleOrNull()
+                                    val lon = lonInput.trim().toDoubleOrNull()
+                                    if (lat != null && lon != null) {
+                                        val cleanName = cityInput.trim().ifEmpty { "Tọa độ tùy chỉnh" }
+                                        applyStateChange {
+                                            it.copy(
+                                                locationName = cleanName,
+                                                latitude = lat,
+                                                longitude = lon
+                                            )
+                                        }
+                                        refreshAndUpdateWidgets("Đã lưu tọa độ $cleanName")
+                                    } else {
+                                        statusMessage = "Vĩ độ hoặc kinh độ chưa đúng định dạng số"
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("Lưu tọa độ & cập nhật")
                             }
                         }
                     }
