@@ -8,6 +8,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.LocalContext
 import androidx.glance.LocalSize
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.clickable
@@ -64,6 +65,7 @@ private fun CalendarWeatherWidgetContent(
     state: WeatherState,
     lunar: VietnameseLunarDate
 ) {
+    val context = LocalContext.current
     val size = LocalSize.current
     val isCompact4x2 = size.height < 165.dp
 
@@ -117,11 +119,7 @@ private fun CalendarWeatherWidgetContent(
         WidgetStyle.TRANSPARENT, WidgetStyle.LIQUID_DARK -> state.accentColor.primaryDark
     }
 
-    val openAppIntent = Intent(GlanceAppWidgetManager.getGlanceId(TODO())?.let { null } ?: Intent())
-        .setClassName(
-            "com.example.glassweather",
-            "com.example.glassweather.MainActivity"
-        )
+    val openAppIntent = Intent(context, MainActivity::class.java)
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
 
     val outerPadding = if (isCompact4x2) 10.dp else 14.dp
@@ -150,7 +148,6 @@ private fun CalendarWeatherWidgetContent(
                 verticalAlignment = Alignment.Top,
                 horizontalAlignment = Alignment.Start
             ) {
-                // 1. Hàng trên: Thứ/Ngày dương + nút làm mới
                 Row(
                     modifier = GlanceModifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -181,7 +178,6 @@ private fun CalendarWeatherWidgetContent(
 
                 Spacer(modifier = GlanceModifier.height(2.dp))
 
-                // 2. Dòng lịch âm + Can Chi
                 Text(
                     text = "${lunar.shortLabel()} • Ngày ${lunar.dayCanChi} • ${lunar.yearCanChi}",
                     style = TextStyle(
@@ -193,7 +189,6 @@ private fun CalendarWeatherWidgetContent(
 
                 Spacer(modifier = GlanceModifier.height(sectionGap))
 
-                // 3. Cụm giữa: Nhiệt độ & Icon bên trái + Địa điểm, trạng thái, cao/thấp bên phải
                 Row(
                     modifier = GlanceModifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -257,7 +252,6 @@ private fun CalendarWeatherWidgetContent(
                 if (hourlyItems.isNotEmpty()) {
                     Spacer(modifier = GlanceModifier.height(sectionGap))
 
-                    // 4. Thanh dự báo theo giờ gọn nhẹ (hiển thị cả ở 4x2 và 4x4)
                     Row(
                         modifier = GlanceModifier
                             .fillMaxWidth()
