@@ -7,8 +7,8 @@ import java.util.Locale
 
 enum class WidgetStyle(val label: String) {
     TRANSPARENT("Trong suốt hoàn toàn"),
-    LIQUID_LIGHT("Kính lỏng sáng"),
-    LIQUID_DARK("Kính lỏng tối")
+    LIQUID_LIGHT("Kính mờ sáng"),
+    LIQUID_DARK("Kính mờ tối")
 }
 
 enum class AppThemeMode(val label: String) {
@@ -26,7 +26,11 @@ enum class AppAccentColor(
     EMERALD("Xanh ngọc", Color(0xFF059669), Color(0xFF34D399)),
     SUNSET("Cam hoàng hôn", Color(0xFFEA580C), Color(0xFFFB923C)),
     IRIS("Tím oải hương", Color(0xFF7C3AED), Color(0xFFA78BFA)),
-    SLATE("Than chì tối giản", Color(0xFF334155), Color(0xFF94A3B8))
+    CORAL("Hồng san hô", Color(0xFFE11D48), Color(0xFFFB7185)),
+    AMBER("Vàng hổ phách", Color(0xFFD97706), Color(0xFFFBBF24)),
+    CRIMSON("Đỏ ruby", Color(0xFFDC2626), Color(0xFFF87171)),
+    MINT("Xanh bạc hà", Color(0xFF0D9488), Color(0xFF2DD4BF)),
+    SLATE("Than chì tối giản", Color(0xFF475569), Color(0xFFCBD5E1))
 }
 
 data class HourlyItem(
