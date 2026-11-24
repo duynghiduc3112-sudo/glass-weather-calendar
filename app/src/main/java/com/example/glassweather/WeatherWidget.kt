@@ -31,7 +31,6 @@ import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.width
-import androidx.glance.text.FontStyle
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
@@ -312,7 +311,7 @@ private fun CalendarWeatherWidgetContent(
                         style = TextStyle(
                             color = ColorProvider(textSecondary),
                             fontSize = 10.sp,
-                            fontStyle = FontStyle.Italic
+                            fontWeight = FontWeight.Medium
                         )
                     )
                 }
