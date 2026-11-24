@@ -7,6 +7,8 @@
 
     <application
         android:allowBackup="true"
+        android:icon="@mipmap/app_icon"
+        android:roundIcon="@mipmap/app_icon"
         android:label="Glass Weather"
         android:theme="@style/Theme.GlassWeather">
 
