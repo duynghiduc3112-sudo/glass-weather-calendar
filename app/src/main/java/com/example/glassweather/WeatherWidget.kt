@@ -7,6 +7,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.LocalSize
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
@@ -58,10 +59,12 @@ private fun CalendarWeatherWidgetContent(
     state: WeatherState,
     lunar: VietnameseLunarDate
 ) {
+    val size = LocalSize.current
+    val isCompact4x2 = size.height < 165.dp
+
     val (weekday, solarDate) = todaySolarFormatted()
     val (weatherIcon, weatherDesc) = weatherDescription(state.weatherCode)
 
-    // Dùng kính mờ nhẹ và viền sáng mảnh để giữ độ trong của hình nền, không phủ mảng màu đặc
     val glassBg = when (state.style) {
         WidgetStyle.TRANSPARENT -> Color(0x14000000)
         WidgetStyle.LIQUID_LIGHT -> Color(0x2EFFFFFF)
@@ -90,6 +93,11 @@ private fun CalendarWeatherWidgetContent(
         WidgetStyle.TRANSPARENT, WidgetStyle.LIQUID_DARK -> state.accentColor.primaryDark
     }
 
+    val outerPadding = if (isCompact4x2) 10.dp else 14.dp
+    val lunarSpacing = if (isCompact4x2) 2.dp else 4.dp
+    val tempSize = if (isCompact4x2) 24.sp else 26.sp
+    val iconSize = if (isCompact4x2) 26.sp else 28.sp
+
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
@@ -101,9 +109,9 @@ private fun CalendarWeatherWidgetContent(
         Box(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .cornerRadius(24.5.dp)
+                .cornerRadius(24.dp)
                 .background(ColorProvider(glassBg))
-                .padding(14.dp)
+                .padding(outerPadding)
         ) {
             Column(
                 modifier = GlanceModifier.fillMaxSize(),
@@ -133,7 +141,7 @@ private fun CalendarWeatherWidgetContent(
                         )
                     }
 
-                    Spacer(modifier = GlanceModifier.height(4.dp))
+                    Spacer(modifier = GlanceModifier.height(lunarSpacing))
 
                     Text(
                         text = "${lunar.shortLabel()} • Ngày ${lunar.dayCanChi} • ${lunar.yearCanChi}",
@@ -154,14 +162,14 @@ private fun CalendarWeatherWidgetContent(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = weatherIcon,
-                            style = TextStyle(fontSize = 28.sp)
+                            style = TextStyle(fontSize = iconSize)
                         )
                         Spacer(modifier = GlanceModifier.width(8.dp))
                         Text(
                             text = "${state.temperatureC.toInt()}°C",
                             style = TextStyle(
                                 color = ColorProvider(textPrimary),
-                                fontSize = 26.sp,
+                                fontSize = tempSize,
                                 fontWeight = FontWeight.Bold
                             )
                         )
@@ -188,7 +196,7 @@ private fun CalendarWeatherWidgetContent(
                     }
                 }
 
-                if (state.hourly.isNotEmpty()) {
+                if (!isCompact4x2 && state.hourly.isNotEmpty()) {
                     Spacer(modifier = GlanceModifier.height(10.dp))
                     Row(
                         modifier = GlanceModifier
