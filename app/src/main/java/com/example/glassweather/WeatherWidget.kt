@@ -61,7 +61,6 @@ private fun CalendarWeatherWidgetContent(
     val (weekday, solarDate) = todaySolarFormatted()
     val (weatherIcon, weatherDesc) = weatherDescription(state.weatherCode)
 
-    // Pha màu chủ đề (accent) với độ trong suốt để giữ nét kính lỏng
     val accentSoftBorder = state.accentColor.primaryDark.copy(alpha = 0.65f)
     val accentLunarLight = state.accentColor.primaryLight
     val accentLunarDark = state.accentColor.primaryDark
@@ -110,12 +109,12 @@ private fun CalendarWeatherWidgetContent(
         ) {
             Column(
                 modifier = GlanceModifier.fillMaxSize(),
-                verticalAlignment = Alignment.SpaceBetween
+                verticalAlignment = Alignment.Top,
+                horizontalAlignment = Alignment.Start
             ) {
                 Column(modifier = GlanceModifier.fillMaxWidth()) {
                     Row(
                         modifier = GlanceModifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
@@ -126,6 +125,7 @@ private fun CalendarWeatherWidgetContent(
                                 fontWeight = FontWeight.Bold
                             )
                         )
+                        Spacer(modifier = GlanceModifier.defaultWeight())
                         Text(
                             text = "↻ ${state.updatedAt}",
                             style = TextStyle(
@@ -147,9 +147,10 @@ private fun CalendarWeatherWidgetContent(
                     )
                 }
 
+                Spacer(modifier = GlanceModifier.defaultWeight())
+
                 Row(
                     modifier = GlanceModifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -167,6 +168,8 @@ private fun CalendarWeatherWidgetContent(
                             )
                         )
                     }
+
+                    Spacer(modifier = GlanceModifier.defaultWeight())
 
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
@@ -188,16 +191,19 @@ private fun CalendarWeatherWidgetContent(
                 }
 
                 if (state.hourly.isNotEmpty()) {
+                    Spacer(modifier = GlanceModifier.height(8.dp))
                     Row(
                         modifier = GlanceModifier
                             .fillMaxWidth()
                             .cornerRadius(16.dp)
                             .background(ColorProvider(palette.pillBg))
                             .padding(vertical = 6.dp, horizontal = 8.dp),
-                        horizontalAlignment = Alignment.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        state.hourly.forEach { item ->
+                        state.hourly.forEachIndexed { index, item ->
+                            if (index > 0) {
+                                Spacer(modifier = GlanceModifier.defaultWeight())
+                            }
                             val (hIcon, _) = weatherDescription(item.code)
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
