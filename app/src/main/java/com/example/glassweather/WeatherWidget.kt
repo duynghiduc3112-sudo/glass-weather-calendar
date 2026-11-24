@@ -1,6 +1,7 @@
 package com.example.glassweather
 
 import android.content.Context
+import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -15,6 +16,7 @@ import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
+import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
@@ -32,6 +34,9 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 class RefreshWeatherAction : ActionCallback {
     override suspend fun onAction(
@@ -65,6 +70,25 @@ private fun CalendarWeatherWidgetContent(
     val (weekday, solarDate) = todaySolarFormatted()
     val (weatherIcon, weatherDesc) = weatherDescription(state.weatherCode)
 
+    val currentInt = state.temperatureC.roundToInt()
+    val temps = state.hourly.map { it.tempC } + currentInt
+    val maxTemp = temps.maxOrNull() ?: (currentInt + 3)
+    val minTemp = temps.minOrNull() ?: (currentInt - 3)
+
+    val estimatedHumidity = when (state.weatherCode) {
+        in 51..99 -> 86
+        45, 48 -> 90
+        3 -> 78
+        1, 2 -> 68
+        else -> 58
+    }
+    val estimatedWind = when (state.weatherCode) {
+        in 80..99 -> 24
+        in 51..67 -> 18
+        3 -> 14
+        else -> 10
+    }
+
     val glassBg = when (state.style) {
         WidgetStyle.TRANSPARENT -> Color(0x14000000)
         WidgetStyle.LIQUID_LIGHT -> Color(0x2EFFFFFF)
@@ -76,7 +100,7 @@ private fun CalendarWeatherWidgetContent(
         WidgetStyle.LIQUID_DARK -> Color(0x40FFFFFF)
     }
     val pillGlass = when (state.style) {
-        WidgetStyle.TRANSPARENT -> Color(0x1C000000)
+        WidgetStyle.TRANSPARENT -> Color(0x1F000000)
         WidgetStyle.LIQUID_LIGHT -> Color(0x38FFFFFF)
         WidgetStyle.LIQUID_DARK -> Color(0x29FFFFFF)
     }
@@ -93,10 +117,18 @@ private fun CalendarWeatherWidgetContent(
         WidgetStyle.TRANSPARENT, WidgetStyle.LIQUID_DARK -> state.accentColor.primaryDark
     }
 
+    val openAppIntent = Intent(GlanceAppWidgetManager.getGlanceId(TODO())?.let { null } ?: Intent())
+        .setClassName(
+            "com.example.glassweather",
+            "com.example.glassweather.MainActivity"
+        )
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+
     val outerPadding = if (isCompact4x2) 10.dp else 14.dp
-    val lunarSpacing = if (isCompact4x2) 2.dp else 4.dp
-    val tempSize = if (isCompact4x2) 24.sp else 26.sp
-    val iconSize = if (isCompact4x2) 26.sp else 28.sp
+    val sectionGap = if (isCompact4x2) 6.dp else 10.dp
+    val tempSize = if (isCompact4x2) 25.sp else 28.sp
+    val iconSize = if (isCompact4x2) 27.sp else 30.sp
+    val hourlyItems = if (isCompact4x2) state.hourly.take(4) else state.hourly.take(5)
 
     Box(
         modifier = GlanceModifier
@@ -104,7 +136,7 @@ private fun CalendarWeatherWidgetContent(
             .cornerRadius(26.dp)
             .background(ColorProvider(borderTint))
             .padding(1.5.dp)
-            .clickable(actionRunCallback<RefreshWeatherAction>())
+            .clickable(actionStartActivity(openAppIntent))
     ) {
         Box(
             modifier = GlanceModifier
@@ -118,43 +150,50 @@ private fun CalendarWeatherWidgetContent(
                 verticalAlignment = Alignment.Top,
                 horizontalAlignment = Alignment.Start
             ) {
-                Column(modifier = GlanceModifier.fillMaxWidth()) {
-                    Row(
-                        modifier = GlanceModifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "$weekday • $solarDate",
-                            style = TextStyle(
-                                color = ColorProvider(textPrimary),
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        )
-                        Spacer(modifier = GlanceModifier.defaultWeight())
-                        Text(
-                            text = "↻ ${state.updatedAt}",
-                            style = TextStyle(
-                                color = ColorProvider(textSecondary),
-                                fontSize = 12.sp
-                            )
-                        )
-                    }
-
-                    Spacer(modifier = GlanceModifier.height(lunarSpacing))
-
+                // 1. Hàng trên: Thứ/Ngày dương + nút làm mới
+                Row(
+                    modifier = GlanceModifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        text = "${lunar.shortLabel()} • Ngày ${lunar.dayCanChi} • ${lunar.yearCanChi}",
+                        text = "$weekday • $solarDate",
                         style = TextStyle(
-                            color = ColorProvider(lunarColor),
-                            fontSize = 14.sp,
+                            color = ColorProvider(textPrimary),
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
+                        )
+                    )
+                    Spacer(modifier = GlanceModifier.defaultWeight())
+                    Text(
+                        text = "↻ ${state.updatedAt}",
+                        modifier = GlanceModifier
+                            .cornerRadius(10.dp)
+                            .background(ColorProvider(pillGlass))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                            .clickable(actionRunCallback<RefreshWeatherAction>()),
+                        style = TextStyle(
+                            color = ColorProvider(textSecondary),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
                         )
                     )
                 }
 
-                Spacer(modifier = GlanceModifier.defaultWeight())
+                Spacer(modifier = GlanceModifier.height(2.dp))
 
+                // 2. Dòng lịch âm + Can Chi
+                Text(
+                    text = "${lunar.shortLabel()} • Ngày ${lunar.dayCanChi} • ${lunar.yearCanChi}",
+                    style = TextStyle(
+                        color = ColorProvider(lunarColor),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+
+                Spacer(modifier = GlanceModifier.height(sectionGap))
+
+                // 3. Cụm giữa: Nhiệt độ & Icon bên trái + Địa điểm, trạng thái, cao/thấp bên phải
                 Row(
                     modifier = GlanceModifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -165,14 +204,24 @@ private fun CalendarWeatherWidgetContent(
                             style = TextStyle(fontSize = iconSize)
                         )
                         Spacer(modifier = GlanceModifier.width(8.dp))
-                        Text(
-                            text = "${state.temperatureC.toInt()}°C",
-                            style = TextStyle(
-                                color = ColorProvider(textPrimary),
-                                fontSize = tempSize,
-                                fontWeight = FontWeight.Bold
+                        Column {
+                            Text(
+                                text = "$currentInt°C",
+                                style = TextStyle(
+                                    color = ColorProvider(textPrimary),
+                                    fontSize = tempSize,
+                                    fontWeight = FontWeight.Bold
+                                )
                             )
-                        )
+                            Text(
+                                text = "▲ ${max(maxTemp, currentInt)}°  ▼ ${min(minTemp, currentInt)}°",
+                                style = TextStyle(
+                                    color = ColorProvider(textSecondary),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            )
+                        }
                     }
 
                     Spacer(modifier = GlanceModifier.defaultWeight())
@@ -190,44 +239,62 @@ private fun CalendarWeatherWidgetContent(
                             text = weatherDesc,
                             style = TextStyle(
                                 color = ColorProvider(textSecondary),
-                                fontSize = 12.sp
+                                fontSize = 11.sp
+                            )
+                        )
+                        Spacer(modifier = GlanceModifier.height(2.dp))
+                        Text(
+                            text = "💧 $estimatedHumidity% • 💨 ${estimatedWind}km/h",
+                            style = TextStyle(
+                                color = ColorProvider(lunarColor),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Medium
                             )
                         )
                     }
                 }
 
-                if (!isCompact4x2 && state.hourly.isNotEmpty()) {
-                    Spacer(modifier = GlanceModifier.height(10.dp))
+                if (hourlyItems.isNotEmpty()) {
+                    Spacer(modifier = GlanceModifier.height(sectionGap))
+
+                    // 4. Thanh dự báo theo giờ gọn nhẹ (hiển thị cả ở 4x2 và 4x4)
                     Row(
                         modifier = GlanceModifier
                             .fillMaxWidth()
-                            .cornerRadius(16.dp)
+                            .cornerRadius(14.dp)
                             .background(ColorProvider(pillGlass))
-                            .padding(vertical = 6.dp, horizontal = 8.dp),
+                            .padding(
+                                vertical = if (isCompact4x2) 4.dp else 6.dp,
+                                horizontal = 8.dp
+                            ),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        state.hourly.forEachIndexed { index, item ->
+                        hourlyItems.forEachIndexed { index, item ->
                             if (index > 0) {
                                 Spacer(modifier = GlanceModifier.defaultWeight())
                             }
                             val (hIcon, _) = weatherDescription(item.code)
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Text(
                                     text = item.hour,
                                     style = TextStyle(
                                         color = ColorProvider(textSecondary),
-                                        fontSize = 11.sp
+                                        fontSize = 10.sp
                                     )
                                 )
+                                Spacer(modifier = GlanceModifier.width(3.dp))
                                 Text(
                                     text = hIcon,
-                                    style = TextStyle(fontSize = 14.sp)
+                                    style = TextStyle(fontSize = 12.sp)
                                 )
+                                Spacer(modifier = GlanceModifier.width(2.dp))
                                 Text(
                                     text = "${item.tempC}°",
                                     style = TextStyle(
                                         color = ColorProvider(textPrimary),
-                                        fontSize = 12.sp,
+                                        fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold
                                     )
                                 )
