@@ -202,4 +202,3 @@ fun GlassWeatherApp() {
                                             fontSize = 24.sp,
                                             fontWeight = FontWeight.Bold
                                         )
-                                        Text
