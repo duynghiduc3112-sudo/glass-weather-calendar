@@ -31,6 +31,7 @@ import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.width
+import androidx.glance.text.FontStyle
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
@@ -38,6 +39,8 @@ import androidx.glance.unit.ColorProvider
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
+
+private const val PERSONAL_SIGNATURE = "— Gió"
 
 class RefreshWeatherAction : ActionCallback {
     override suspend fun onAction(
@@ -295,6 +298,23 @@ private fun CalendarWeatherWidgetContent(
                             }
                         }
                     }
+                }
+
+                Spacer(modifier = GlanceModifier.defaultWeight())
+
+                Row(
+                    modifier = GlanceModifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Spacer(modifier = GlanceModifier.defaultWeight())
+                    Text(
+                        text = PERSONAL_SIGNATURE,
+                        style = TextStyle(
+                            color = ColorProvider(textSecondary),
+                            fontSize = 10.sp,
+                            fontStyle = FontStyle.Italic
+                        )
+                    )
                 }
             }
         }
