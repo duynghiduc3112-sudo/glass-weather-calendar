@@ -61,6 +61,11 @@ private fun CalendarWeatherWidgetContent(
     val (weekday, solarDate) = todaySolarFormatted()
     val (weatherIcon, weatherDesc) = weatherDescription(state.weatherCode)
 
+    // Pha màu chủ đề (accent) với độ trong suốt để giữ nét kính lỏng
+    val accentSoftBorder = state.accentColor.primaryDark.copy(alpha = 0.65f)
+    val accentLunarLight = state.accentColor.primaryLight
+    val accentLunarDark = state.accentColor.primaryDark
+
     val palette = when (state.style) {
         WidgetStyle.TRANSPARENT -> GlassPalette(
             outerBorder = Color(0x00000000),
@@ -68,23 +73,23 @@ private fun CalendarWeatherWidgetContent(
             pillBg = Color(0x2E000000),
             textPrimary = Color.White,
             textSecondary = Color(0xE6FFFFFF),
-            lunarAccent = Color(0xFFFFE082)
+            lunarAccent = accentLunarDark
         )
         WidgetStyle.LIQUID_LIGHT -> GlassPalette(
-            outerBorder = Color(0x73FFFFFF),
+            outerBorder = accentSoftBorder,
             innerGlass = Color(0x45FFFFFF),
             pillBg = Color(0x38FFFFFF),
             textPrimary = Color(0xFF111827),
             textSecondary = Color(0xCC1F2937),
-            lunarAccent = Color(0xFF9A3412)
+            lunarAccent = accentLunarLight
         )
         WidgetStyle.LIQUID_DARK -> GlassPalette(
-            outerBorder = Color(0x59FFFFFF),
+            outerBorder = accentSoftBorder,
             innerGlass = Color(0x7D111827),
             pillBg = Color(0x29FFFFFF),
             textPrimary = Color.White,
             textSecondary = Color(0xCCF3F4F6),
-            lunarAccent = Color(0xFFFCD34D)
+            lunarAccent = accentLunarDark
         )
     }
 
