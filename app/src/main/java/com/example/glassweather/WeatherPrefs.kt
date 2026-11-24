@@ -10,13 +10,17 @@ object WeatherPrefs {
         locationName: String,
         lat: Double,
         lon: Double,
-        style: WidgetStyle
+        style: WidgetStyle,
+        themeMode: AppThemeMode,
+        accentColor: AppAccentColor
     ) {
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).edit()
             .putString("loc_name", locationName)
             .putString("lat", lat.toString())
             .putString("lon", lon.toString())
             .putString("style", style.name)
+            .putString("theme_mode", themeMode.name)
+            .putString("accent_color", accentColor.name)
             .apply()
     }
 
@@ -39,9 +43,18 @@ object WeatherPrefs {
 
     fun loadState(context: Context): WeatherState {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+
         val styleName = prefs.getString("style", WidgetStyle.LIQUID_LIGHT.name)
         val style = runCatching { WidgetStyle.valueOf(styleName!!) }
             .getOrDefault(WidgetStyle.LIQUID_LIGHT)
+
+        val themeName = prefs.getString("theme_mode", AppThemeMode.SYSTEM.name)
+        val themeMode = runCatching { AppThemeMode.valueOf(themeName!!) }
+            .getOrDefault(AppThemeMode.SYSTEM)
+
+        val accentName = prefs.getString("accent_color", AppAccentColor.OCEAN.name)
+        val accentColor = runCatching { AppAccentColor.valueOf(accentName!!) }
+            .getOrDefault(AppAccentColor.OCEAN)
 
         val rawHourly = prefs.getString("hourly_data", "") ?: ""
         val hourlyList = if (rawHourly.isBlank()) {
@@ -67,6 +80,8 @@ object WeatherPrefs {
             weatherCode = prefs.getInt("weather_code", 1),
             updatedAt = prefs.getString("updated_at", "Vừa xong") ?: "Vừa xong",
             style = style,
+            themeMode = themeMode,
+            accentColor = accentColor,
             hourly = hourlyList
         )
     }
